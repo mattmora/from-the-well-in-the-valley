@@ -50,8 +50,6 @@ public class PlayerController : MonoBehaviour
         public bool falloff;
     }
 
-
-
     public PlayerInput inputs;
     public PlayerEvents events;
 
@@ -97,6 +95,12 @@ public class PlayerController : MonoBehaviour
 
     private void Awake()
     {
+        isoForward = Vector3.zero;//Vector3.Normalize(Vector3.forward + Vector3.right);
+        isoRight = Vector3.right;//Vector3.Normalize(Vector3.right + Vector3.back);
+
+        rb = GetComponent<Rigidbody>();
+        coll = GetComponent<BoxCollider>();
+        mat = GetComponent<Renderer>().material;
         sprite = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
     }
@@ -104,13 +108,6 @@ public class PlayerController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        isoForward = Vector3.zero;//Vector3.Normalize(Vector3.forward + Vector3.right);
-        isoRight = Vector3.right;//Vector3.Normalize(Vector3.right + Vector3.back);
-
-        rb = GetComponent<Rigidbody>();
-        coll = GetComponent<BoxCollider>();
-        mat = GetComponent<Renderer>().material;
-
         currentActions = new HashSet<PlayerAction>();
 
         FieldInfo[] fields = GetType().GetFields();
@@ -260,18 +257,15 @@ public class PlayerController : MonoBehaviour
     void GroundCheck()
     {
         RaycastHit hit;
-        bool centerGrounded = Physics.Raycast(transform.position, Vector3.down, out hit, (height * transform.localScale.y * 0.5f) + Physics.defaultContactOffset);//Physics.defaultContactOffset);
+        float castDistance = (height * transform.localScale.y * 0.5f) + Physics.defaultContactOffset;
+        bool centerGrounded = Physics.Raycast(transform.position, Vector3.down, out hit, castDistance);//Physics.defaultContactOffset);
         //Debug.Log(Physics.defaultContactOffset);
 
-        // This only makes sense as long as it's just a 1x1 cube but want to experiment
-        //int cornersGrounded = 0;
-        //if (Physics.Raycast(transform.position + (Vector3.right + Vector3.forward) * 0.5f, Vector3.down, out hit, 0.5f + 0.01f)) cornersGrounded++;
-        //Debug.Log(hit.normal);
-        //if (Physics.Raycast(transform.position + (Vector3.right + Vector3.back) * 0.5f, Vector3.down, out hit, 0.5f + 0.01f)) cornersGrounded++;
-        //if (Physics.Raycast(transform.position + (Vector3.left + Vector3.back) * 0.5f, Vector3.down, out hit, 0.5f + 0.01f)) cornersGrounded++;
-        //if (Physics.Raycast(transform.position + (Vector3.left + Vector3.forward) * 0.5f, Vector3.down, out hit, 0.5f + 0.01f)) cornersGrounded++;
+        int cornersGrounded = 0;
+        if (Physics.Raycast(transform.position + (Vector3.right * coll.size.x * 0.5f), Vector3.down, out hit, castDistance)) cornersGrounded++;
+        if (Physics.Raycast(transform.position + (Vector3.left * coll.size.x * 0.5f), Vector3.down, out hit, castDistance)) cornersGrounded++;
 
-        if (centerGrounded)
+        if (centerGrounded || cornersGrounded > 0)
             //if (Physics.BoxCast(transform.position, new Vector3(0.5f - Physics.defaultContactOffset, 0, 0.5f - Physics.defaultContactOffset), Vector3.down, Quaternion.identity, 0.5f + Physics.defaultContactOffset))
         {
             if (currentPlayerState == PlayerState.Aerial) events.land = true;
@@ -289,7 +283,6 @@ public class PlayerController : MonoBehaviour
             activeGravity = gravity;
         }
 
-        // Not to sure where to put this
         if (events.land)
         {
             land.StartAction();

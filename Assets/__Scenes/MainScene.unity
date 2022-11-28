@@ -253,7 +253,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 855708773}
-  m_Material: {fileID: 13400000, guid: a2522d4006905404b9dbb78e8efcfae7, type: 2}
+  m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
@@ -555,7 +555,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 1498622445, guid: 7884f263e3c2df64fa96c1dfe91754ba, type: 3}
+  m_Sprite: {fileID: -922414599, guid: 7884f263e3c2df64fa96c1dfe91754ba, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -730,7 +730,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c29cff538c195c249b69c6f2236de67b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Library: []
+  m_Library:
+  - m_Name: Player
+    m_Hash: 0
+    m_CategoryList:
+    - m_Name: Entry
+      m_Hash: 0
+      m_Sprite: {fileID: -1285880260, guid: 7884f263e3c2df64fa96c1dfe91754ba, type: 3}
+    - m_Name: Hurt
+      m_Hash: 0
+      m_Sprite: {fileID: -922414599, guid: 7884f263e3c2df64fa96c1dfe91754ba, type: 3}
   m_SpriteLibraryAsset: {fileID: 7108339969198208228, guid: 7cc0819a7a034834386bdbdcbfeac122, type: 3}
 --- !u!114 &2102820240
 MonoBehaviour:
@@ -746,7 +755,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_CategoryHash: 0
   m_labelHash: 0
-  m_SpriteKey: 1.3781939e-37
+  m_SpriteKey: 185.45605
 --- !u!95 &2102820241
 Animator:
   serializedVersion: 4
