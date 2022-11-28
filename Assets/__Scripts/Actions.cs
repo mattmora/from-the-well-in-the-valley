@@ -17,9 +17,9 @@ public class PlayerActionSet : Dictionary<Enum, PlayerAction>
         }
     }
 
-    public void StartActionFor(Enum id)
+    public bool StartActionFor(Enum id)
     {
-        this[id].StartAction();
+        return this[id].StartAction();
     }
 }
 
@@ -106,9 +106,9 @@ public abstract class PlayerAction
     }
 
     // Should be called from Update and will set physical processes to be called in FixedUpdate
-    public void StartAction(int startingSegment = 0)
+    public bool StartAction(int startingSegment = 0)
     {
-        if (!playCheck()) return;
+        if (!playCheck()) return false;
 
         List<PlayerAction> actionsToCancel = new List<PlayerAction>();
         foreach (PlayerAction action in owner.currentActions)
@@ -120,7 +120,7 @@ public abstract class PlayerAction
                     break;
                 case ActionFlow.Blocks:
                     Debug.Log(action.actionName + " BLOCKED " + actionName);
-                    return;
+                    return false;
                 case ActionFlow.CanceledBy:
                     actionsToCancel.Add(action);
                     break;
@@ -142,6 +142,7 @@ public abstract class PlayerAction
         segmentIndex = startingSegment;
         PreAction();
         StartCurrentSegment();
+        return true;
     }
 
     public void StopAction()
@@ -171,14 +172,18 @@ public abstract class PlayerAction
     {
         if (segmentIndex < segments.Length)
         {
-            if (segmentFrame >= segments[segmentIndex].numFrames)
+            while (segmentFrame >= segments[segmentIndex].numFrames)
             {
                 segmentIndex++;
                 if (segmentIndex < segments.Length)
                 {
                     StartCurrentSegment();
                 }
-                else EndAction();
+                else
+                {
+                    EndAction();
+                    break;
+                }
             }
             process(rb);
         }
@@ -245,11 +250,19 @@ public class MoveAction : PlayerAction
 
     private void MoveProcess(Rigidbody rb)
     {
+        if (owner.currentPlayerState == PlayerState.Grounded) owner.animator.Play("Move");
         // Apply normal acceleration based on direction input
         float acceleration = owner.currentPlayerState == PlayerState.Grounded ? groundedAcceleration : aerialAcceleration;
         Vector3 movement = acceleration * Vector3.Normalize(owner.forward + owner.right);
         rb.AddForce(movement);
+        if (movement.x > 0) owner.sprite.flipX = false;
+        else if (movement.x < 0) owner.sprite.flipX = true;
         //segmentFrame++;
+    }
+
+    protected override void PostAction()
+    {
+        owner.animator.Play("Stand");
     }
 }
 
@@ -311,6 +324,7 @@ public class GroundedJumpAction : PlayerAction
 
     private void JumpSquatProcess(Rigidbody rb)
     {
+        owner.animator.Play("Squat");
         if (Input.GetButton("Jump"))
         {
             jumpForce = fullJumpForce;
@@ -325,6 +339,7 @@ public class GroundedJumpAction : PlayerAction
     // Called in the owner's FixedUpdate for the duration of the segment
     private void JumpProcess(Rigidbody rb)
     {
+        Debug.Log("JUMP PROCESS");
         Vector3 xzVelocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
         rb.velocity = xzVelocity;
         Vector3 jump = jumpForce * Vector3.up;
@@ -334,8 +349,10 @@ public class GroundedJumpAction : PlayerAction
 
     private void RisingProcess(Rigidbody rb)
     {
+        owner.animator.Play("Jump");
         if (rb.velocity.y <= 0)
         {
+            owner.animator.Play("Stand");
             EndCurrentSegment();
         }
     }
@@ -346,22 +363,38 @@ public class AerialJumpAction : PlayerAction
 {
     public float jumpForce = 10;
 
-    public AerialJumpAction() : base(1)
+    public AerialJumpAction() : base(2)
     {
         correspondingPlayerState = PlayerState.Aerial;
         segments[0] = new Segment("Jump", JumpProcess, 1, ActionFlow.Blocks);
+        segments[1] = new Segment("Rising", RisingProcess, 1, ActionFlow.Free);
+
+        SetActionFlowForSegments(1, ActionFlow.CanceledBy, typeof(AerialDodgeAction), typeof(AerialJumpAction));
+        SetActionFlowForSegments(1, ActionFlow.Blocks, typeof(LandAction), typeof(FallOffAction));
+
         playCheck = () => (owner.aerialJumpCount > 0);
     }
 
     // Called in the owner's FixedUpdate for the duration of the segment
     private void JumpProcess(Rigidbody rb)
     {
+        owner.animator.Play("Squat");
         owner.DecrementJumpCount();
         Vector3 xzVelocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
         rb.velocity = xzVelocity;
         Vector3 jump = jumpForce * Vector3.up;
         rb.AddForce(jump, ForceMode.VelocityChange);
         segmentFrame++;
+    }
+
+    private void RisingProcess(Rigidbody rb)
+    {
+        owner.animator.Play("Jump");
+        if (rb.velocity.y <= 0)
+        {
+            owner.animator.Play("Stand");
+            EndCurrentSegment();
+        }
     }
 }
 
@@ -470,7 +503,14 @@ public class LandAction : PlayerAction
 
     private void LandProcess(Rigidbody rb)
     {
+        Debug.Log("LandProcess");
+        owner.animator.Play("Land");
         segmentFrame++;
+    }
+
+    protected override void PostAction()
+    {
+        owner.animator.Play("Stand");
     }
 }
 

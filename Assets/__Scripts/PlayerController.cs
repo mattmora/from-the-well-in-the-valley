@@ -18,6 +18,8 @@ public class PlayerController : MonoBehaviour
     public Vector3 gravity = new Vector3(0, -40, 0);
     public Vector3 activeGravity;
 
+    public float height = 2f;
+
     // Instead of friction, to avoid increased slow down when air dodging into ground
     public float traction = 10.0f;
 
@@ -40,16 +42,18 @@ public class PlayerController : MonoBehaviour
     }
 
     [Serializable]
-    public class PlayerEvent
+    public class PlayerEvents
     {
-        public bool jump;
+        public int jump;
         public bool dodge;
         public bool land;
         public bool falloff;
     }
 
+
+
     public PlayerInput inputs;
-    public PlayerEvent events;
+    public PlayerEvents events;
 
     public Vector3 forward;
     public Vector3 right;
@@ -82,15 +86,26 @@ public class PlayerController : MonoBehaviour
 
     public HashSet<PlayerAction> currentActions;
 
+    [HideInInspector]
+    public SpriteRenderer sprite;
+    [HideInInspector]
+    public Animator animator;
+
     void Reset()
     {
+    }
+
+    private void Awake()
+    {
+        sprite = GetComponent<SpriteRenderer>();
+        animator = GetComponent<Animator>();
     }
 
     // Start is called before the first frame update
     void Start()
     {
-        isoForward = Vector3.Normalize(Vector3.forward + Vector3.right);
-        isoRight = Vector3.Normalize(Vector3.right + Vector3.back);
+        isoForward = Vector3.zero;//Vector3.Normalize(Vector3.forward + Vector3.right);
+        isoRight = Vector3.right;//Vector3.Normalize(Vector3.right + Vector3.back);
 
         rb = GetComponent<Rigidbody>();
         coll = GetComponent<BoxCollider>();
@@ -146,6 +161,8 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        ProcessInput();
+
         // Check for grounding
         GroundCheck();
 
@@ -189,18 +206,35 @@ public class PlayerController : MonoBehaviour
     void GetInput()
     {
         float control = currentPlayerState == PlayerState.Grounded ? 1.0f : aerialControl;
+        control = Mathf.Pow(control, 1 / Time.deltaTime);
 
-        inputs.vertical = (Input.GetAxis("Vertical") * control) + (inputs.vertical * (1.0f - control));
+        //inputs.vertical = (Input.GetAxis("Vertical") * control) + (inputs.vertical * (1.0f - control));
         inputs.horizontal = (Input.GetAxis("Horizontal") * control) + (inputs.horizontal * (1.0f - control));
-        if (Input.GetButton("Vertical") || Input.GetButton("Horizontal"))
+
+        if (Input.GetButtonDown("Jump"))
         {
-            if (Input.GetButton("Dash") && currentPlayerState == PlayerState.Grounded)
+            events.jump = 3;
+        }
+
+        //inputs.verticalAlt = (Input.GetAxis("VerticalAlt") * control) + (inputs.verticalAlt * (1.0f - control));
+        //inputs.horizontalAlt = (Input.GetAxis("HorizontalAlt") * control) + (inputs.horizontalAlt * (1.0f - control));
+        //if (Input.GetButtonDown("Dodge"))
+        //{
+        //    events.dodge = true;
+        //}
+    }
+
+    void ProcessInput()
+    {
+        if (inputs.horizontal != 0 || inputs.vertical != 0)
+        {
+            //if (Input.GetButton("Dash") && currentPlayerState == PlayerState.Grounded)
+            //{
+            //    run.StartAction();
+            //}
+            //else
             {
-                run.StartAction();
-            }
-            else
-            {
-                run.StopAction();
+                //run.StopAction();
                 move.StartAction();
             }
         }
@@ -210,35 +244,23 @@ public class PlayerController : MonoBehaviour
             move.StopAction();
         }
 
-        if (Input.GetButtonDown("Jump"))
+        if (events.jump > 0)
         {
-            events.jump = true;
+            if (jump.StartActionFor(currentPlayerState)) events.jump = 0;
         }
+        events.jump = Mathf.Max(0, events.jump - 1);
 
-        inputs.verticalAlt = (Input.GetAxis("VerticalAlt") * control) + (inputs.verticalAlt * (1.0f - control));
-        inputs.horizontalAlt = (Input.GetAxis("HorizontalAlt") * control) + (inputs.horizontalAlt * (1.0f - control));
-        if (Input.GetButtonDown("Dodge"))
-        {
-            events.dodge = true;
-        }
-
-        // Not to sure whether to put this in Update or FixedUpdate
-        if (events.jump)
-        {
-            jump.StartActionFor(currentPlayerState);
-            events.jump = false;
-        }
-        if (events.dodge)
-        {
-            dodge.StartActionFor(currentPlayerState);
-            events.dodge = false;
-        }
+        //if (events.dodge)
+        //{
+        //    dodge.StartActionFor(currentPlayerState);
+        //    events.dodge = false;
+        //}
     }
 
     void GroundCheck()
     {
         RaycastHit hit;
-        bool centerGrounded = Physics.Raycast(transform.position, Vector3.down, out hit, (transform.localScale.y * 0.5f) + Physics.defaultContactOffset);//Physics.defaultContactOffset);
+        bool centerGrounded = Physics.Raycast(transform.position, Vector3.down, out hit, (height * transform.localScale.y * 0.5f) + Physics.defaultContactOffset);//Physics.defaultContactOffset);
         //Debug.Log(Physics.defaultContactOffset);
 
         // This only makes sense as long as it's just a 1x1 cube but want to experiment
