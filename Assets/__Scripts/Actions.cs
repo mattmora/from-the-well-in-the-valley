@@ -71,6 +71,9 @@ public abstract class PlayerAction
 
     public PlayerState correspondingPlayerState;
 
+    [HideInInspector]
+    public bool active;
+
     protected Func<bool> playCheck = () => true;
 
     protected Action<Rigidbody> process;
@@ -100,7 +103,7 @@ public abstract class PlayerAction
 
     public void Initialize(PlayerController pc, string name)
     {
-        Debug.Log(name + " Initialize");
+        //Debug.Log(name + " Initialize");
         owner = pc;
         actionName = name;
     }
@@ -119,7 +122,7 @@ public abstract class PlayerAction
                 case ActionFlow.Free:
                     break;
                 case ActionFlow.Blocks:
-                    Debug.Log(action.actionName + " BLOCKED " + actionName);
+                    //Debug.Log(action.actionName + " BLOCKED " + actionName);
                     return false;
                 case ActionFlow.CanceledBy:
                     actionsToCancel.Add(action);
@@ -142,6 +145,7 @@ public abstract class PlayerAction
         segmentIndex = startingSegment;
         PreAction();
         StartCurrentSegment();
+        active = true;
         return true;
     }
 
@@ -156,6 +160,7 @@ public abstract class PlayerAction
 
     private void EndAction()
     {
+        active = false;
         process = EmptyProcess;
         PostAction();
         owner.currentActions.Remove(this);
@@ -200,7 +205,7 @@ public abstract class PlayerAction
     }
     private void StartCurrentSegment()
     {
-        Debug.Log(actionName + " " + segments[segmentIndex].name);
+        //Debug.Log(actionName + " " + segments[segmentIndex].name);
         segmentFrame = 0;
         process = segments[segmentIndex].process;
         currentFlow = segments[segmentIndex].typeFlows;
@@ -245,7 +250,7 @@ public class MoveAction : PlayerAction
         // Blocks self
         SetActionFlowForSegments(0, ActionFlow.Blocks, typeof(MoveAction));
         // Cancelled by run
-        SetActionFlowForSegments(0, ActionFlow.CanceledBy, typeof(RunAction), typeof(GroundedDodgeAction), typeof(AerialDodgeAction), typeof(LandAction)); 
+        SetActionFlowForSegments(0, ActionFlow.CanceledBy, typeof(RunAction), typeof(GroundedDodgeAction), typeof(AerialDodgeAction), typeof(LandAction), typeof(GroundedJumpAction)); 
     }
 
     private void MoveProcess(Rigidbody rb)
@@ -339,7 +344,6 @@ public class GroundedJumpAction : PlayerAction
     // Called in the owner's FixedUpdate for the duration of the segment
     private void JumpProcess(Rigidbody rb)
     {
-        Debug.Log("JUMP PROCESS");
         Vector3 xzVelocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
         rb.velocity = xzVelocity;
         Vector3 jump = jumpForce * Vector3.up;
@@ -437,7 +441,7 @@ public class GroundedDodgeAction : PlayerAction
 
     protected override void PostAction()
     {
-        Debug.Log(actionName + " PostAction");
+        //Debug.Log(actionName + " PostAction");
         owner.groundedDrag = ownerDrag;
     }
 }
@@ -487,7 +491,7 @@ public class AerialDodgeAction : PlayerAction
 
     protected override void PostAction()
     {
-        Debug.Log(actionName + " PostAction");
+        //Debug.Log(actionName + " PostAction");
         owner.aerialDrag = ownerDrag;
         owner.gravity = ownerGravity;
     }
@@ -503,7 +507,6 @@ public class LandAction : PlayerAction
 
     private void LandProcess(Rigidbody rb)
     {
-        Debug.Log("LandProcess");
         owner.animator.Play("Land");
         segmentFrame++;
     }

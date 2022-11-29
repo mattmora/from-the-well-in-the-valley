@@ -18,7 +18,8 @@ public class PlayerController : MonoBehaviour
     public Vector3 gravity = new Vector3(0, -40, 0);
     public Vector3 activeGravity;
 
-    public float height = 2f;
+    private float height = 2f;
+    public float buffer = 0.1f;
 
     // Instead of friction, to avoid increased slow down when air dodging into ground
     public float traction = 10.0f;
@@ -95,6 +96,8 @@ public class PlayerController : MonoBehaviour
 
     private void Awake()
     {
+        Services.Player = this;
+
         isoForward = Vector3.zero;//Vector3.Normalize(Vector3.forward + Vector3.right);
         isoRight = Vector3.right;//Vector3.Normalize(Vector3.right + Vector3.back);
 
@@ -103,6 +106,9 @@ public class PlayerController : MonoBehaviour
         mat = GetComponent<Renderer>().material;
         sprite = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
+
+        height = coll.size.y;
+        coll.size = new Vector3(coll.size.x, coll.size.y - buffer * 2, coll.size.z);
     }
 
     // Start is called before the first frame update
@@ -192,7 +198,6 @@ public class PlayerController : MonoBehaviour
 
         // Apply gravity
         env += activeGravity;
-
         // Add the composite environmental forces
         rb.AddForce(env);
 
@@ -243,7 +248,11 @@ public class PlayerController : MonoBehaviour
 
         if (events.jump > 0)
         {
-            if (jump.StartActionFor(currentPlayerState)) events.jump = 0;
+            PlayerState effectiveState = falloff.active ? PlayerState.Grounded : currentPlayerState;
+            if (jump.StartActionFor(effectiveState))
+            {
+                events.jump = 0;
+            }
         }
         events.jump = Mathf.Max(0, events.jump - 1);
 
@@ -258,23 +267,44 @@ public class PlayerController : MonoBehaviour
     {
         RaycastHit hit;
         float castDistance = (height * transform.localScale.y * 0.5f) + Physics.defaultContactOffset;
-        bool centerGrounded = Physics.Raycast(transform.position, Vector3.down, out hit, castDistance);//Physics.defaultContactOffset);
         //Debug.Log(Physics.defaultContactOffset);
 
+        float groundHeight = float.MinValue;
         int cornersGrounded = 0;
-        if (Physics.Raycast(transform.position + (Vector3.right * coll.size.x * 0.5f), Vector3.down, out hit, castDistance)) cornersGrounded++;
-        if (Physics.Raycast(transform.position + (Vector3.left * coll.size.x * 0.5f), Vector3.down, out hit, castDistance)) cornersGrounded++;
+        if (Physics.Raycast(transform.position + (Vector3.right * coll.size.x * 0.5f), Vector3.down, out hit, castDistance))
+        {
+            cornersGrounded++;
+            groundHeight = Math.Max(hit.point.y, groundHeight);
+        }
+        if (Physics.Raycast(transform.position + (Vector3.left * coll.size.x * 0.5f), Vector3.down, out hit, castDistance))
+        {
+            cornersGrounded++;
+            groundHeight = Math.Max(hit.point.y, groundHeight);
+        }
+
+        bool centerGrounded = Physics.Raycast(transform.position, Vector3.down, out hit, castDistance);//Physics.defaultContactOffset);
+        if (centerGrounded)
+        {
+            groundHeight = Math.Max(hit.point.y, groundHeight);
+        }
 
         if (centerGrounded || cornersGrounded > 0)
             //if (Physics.BoxCast(transform.position, new Vector3(0.5f - Physics.defaultContactOffset, 0, 0.5f - Physics.defaultContactOffset), Vector3.down, Quaternion.identity, 0.5f + Physics.defaultContactOffset))
         {
             if (currentPlayerState == PlayerState.Aerial) events.land = true;
             currentPlayerState = PlayerState.Grounded;
-            if (hit.rigidbody is null || Math.Abs(hit.rigidbody.velocity.y) < Physics.defaultContactOffset)
-            {
-                activeGravity = Vector3.zero;
-                //activeGravity = gravity;
-            }
+            Vector3 landingPosition = transform.position;
+            landingPosition.y = groundHeight + castDistance;
+            transform.position = landingPosition;
+            Vector3 landingVelocity = rb.velocity;
+            landingVelocity.y = 0f;
+            rb.velocity = landingVelocity;
+            activeGravity = Vector3.zero;
+            //if (hit.rigidbody is null || Math.Abs(hit.rigidbody.velocity.y) < Physics.defaultContactOffset)
+            //{
+
+            //    //activeGravity = gravity;
+            //}
         }
         else
         {
