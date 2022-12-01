@@ -18,7 +18,6 @@ public class PlayerController : MonoBehaviour
     public Vector3 gravity = new Vector3(0, -40, 0);
     public Vector3 activeGravity;
 
-    private float height = 2f;
     public float buffer = 0.1f;
 
     // Instead of friction, to avoid increased slow down when air dodging into ground
@@ -66,7 +65,7 @@ public class PlayerController : MonoBehaviour
     private Vector3 isoRight;
 
     private Rigidbody rb;
-    private BoxCollider coll;
+    private CapsuleCollider coll;
     private Material mat;
 
     public Color aerialEmissiveColor = new Color(0.4f, 0.4f, 0.4f, 0.4f);
@@ -102,13 +101,13 @@ public class PlayerController : MonoBehaviour
         isoRight = Vector3.right;//Vector3.Normalize(Vector3.right + Vector3.back);
 
         rb = GetComponent<Rigidbody>();
-        coll = GetComponent<BoxCollider>();
+        coll = GetComponent<CapsuleCollider>();
         mat = GetComponent<Renderer>().material;
         sprite = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
 
-        height = coll.size.y;
-        coll.size = new Vector3(coll.size.x, coll.size.y - buffer * 2, coll.size.z);
+        coll.height -= buffer * 2;
+        coll.radius -= buffer;
     }
 
     // Start is called before the first frame update
@@ -160,14 +159,17 @@ public class PlayerController : MonoBehaviour
             mat.color = Color.gray;
         }
 
+        // Check and correct for environment collision;
+        CollisionCheck();
     }
 
     private void FixedUpdate()
     {
         ProcessInput();
 
-        // Check for grounding
-        GroundCheck();
+        
+        CollisionCheck();
+        GroundUpdate();
 
         // Determine last grounded y position for the camera to follow
         if (currentPlayerState == PlayerState.Grounded) lastGroundedY = transform.position.y;
@@ -263,48 +265,62 @@ public class PlayerController : MonoBehaviour
         //}
     }
 
-    void GroundCheck()
+    void CollisionCheck()
     {
-        RaycastHit hit;
-        float castDistance = (height * transform.localScale.y * 0.5f) + Physics.defaultContactOffset;
-        //Debug.Log(Physics.defaultContactOffset);
+        float height = coll.height + buffer * 2;
+        float radius = coll.radius + buffer;
 
-        float groundHeight = float.MinValue;
-        int cornersGrounded = 0;
-        if (Physics.Raycast(transform.position + (Vector3.right * coll.size.x * 0.5f), Vector3.down, out hit, castDistance))
+        float vCastDistance = height / 2f;
+        Vector3 vHalfExtents = new Vector3(coll.radius, height / 4f, 0.5f);
+        bool ground = Physics.BoxCast(transform.position, vHalfExtents, Vector3.down, out RaycastHit groundHit, Quaternion.identity, vCastDistance); 
+        bool ceiling = Physics.BoxCast(transform.position, vHalfExtents, Vector3.up, out RaycastHit ceilingHit, Quaternion.identity, vCastDistance);
+
+        float hCastDistance = radius; 
+        Vector3 hHalfExtents = new Vector3(radius / 2f, coll.height / 2f, 0.5f);
+        bool right = Physics.BoxCast(transform.position, hHalfExtents, Vector3.right, out RaycastHit rightHit, Quaternion.identity, hCastDistance);
+        bool left = Physics.BoxCast(transform.position, hHalfExtents, Vector3.left, out RaycastHit leftHit, Quaternion.identity, hCastDistance);
+
+        if (ceiling && rb.velocity.y >= 0)
         {
-            cornersGrounded++;
-            groundHeight = Math.Max(hit.point.y, groundHeight);
-        }
-        if (Physics.Raycast(transform.position + (Vector3.left * coll.size.x * 0.5f), Vector3.down, out hit, castDistance))
-        {
-            cornersGrounded++;
-            groundHeight = Math.Max(hit.point.y, groundHeight);
+            Vector3 ceilingPosition = transform.position;
+            ceilingPosition.y = ceilingHit.point.y - vCastDistance;
+            transform.position = ceilingPosition;
+            //Vector3 fixedVelocity = rb.velocity;
+            //fixedVelocity.y = 0f;
+            //rb.velocity = fixedVelocity;
         }
 
-        bool centerGrounded = Physics.Raycast(transform.position, Vector3.down, out hit, castDistance);//Physics.defaultContactOffset);
-        if (centerGrounded)
+        if (right && rb.velocity.x >= 0)
         {
-            groundHeight = Math.Max(hit.point.y, groundHeight);
+            Vector3 rightPosition = transform.position;
+            rightPosition.x = rightHit.point.x - hCastDistance;
+            transform.position = rightPosition;
+            Vector3 fixedVelocity = rb.velocity;
+            fixedVelocity.x = 0f;
+            rb.velocity = fixedVelocity;
         }
 
-        if (centerGrounded || cornersGrounded > 0)
-            //if (Physics.BoxCast(transform.position, new Vector3(0.5f - Physics.defaultContactOffset, 0, 0.5f - Physics.defaultContactOffset), Vector3.down, Quaternion.identity, 0.5f + Physics.defaultContactOffset))
+        if (left && rb.velocity.x <= 0)
+        {
+            Vector3 leftPosition = transform.position;
+            leftPosition.x = leftHit.point.x + hCastDistance;
+            transform.position = leftPosition;
+            Vector3 fixedVelocity = rb.velocity;
+            fixedVelocity.x = 0f;
+            rb.velocity = fixedVelocity;
+        }
+
+        if (ground && rb.velocity.y <= 0)
         {
             if (currentPlayerState == PlayerState.Aerial) events.land = true;
             currentPlayerState = PlayerState.Grounded;
             Vector3 landingPosition = transform.position;
-            landingPosition.y = groundHeight + castDistance;
+            landingPosition.y = groundHit.point.y + vCastDistance;
             transform.position = landingPosition;
             Vector3 landingVelocity = rb.velocity;
             landingVelocity.y = 0f;
             rb.velocity = landingVelocity;
             activeGravity = Vector3.zero;
-            //if (hit.rigidbody is null || Math.Abs(hit.rigidbody.velocity.y) < Physics.defaultContactOffset)
-            //{
-
-            //    //activeGravity = gravity;
-            //}
         }
         else
         {
@@ -312,7 +328,10 @@ public class PlayerController : MonoBehaviour
             currentPlayerState = PlayerState.Aerial;
             activeGravity = gravity;
         }
+    }
 
+    private void GroundUpdate()
+    {
         if (events.land)
         {
             land.StartAction();
@@ -324,6 +343,7 @@ public class PlayerController : MonoBehaviour
             events.falloff = false;
         }
     }
+
 
     public void DecrementJumpCount()
     {
