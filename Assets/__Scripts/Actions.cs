@@ -524,6 +524,12 @@ public class FallOffAction : PlayerAction
     public FallOffAction() : base(1)
     {
         // TODO: Implement variable segment length based on player state (e.g. in melee, 10 frames landing lag from helpless state after air dodge, fewer frames from normal state)
-        segments[0] = new Segment("Falloff", MinimalProcess, 1, ActionFlow.Free);
+        segments[0] = new Segment("Falloff", FalloffProcess, 1, ActionFlow.Free);
+    }
+
+    private void FalloffProcess(Rigidbody rb)
+    {
+        owner.animator.Play("Stand");
+        segmentFrame++;
     }
 }

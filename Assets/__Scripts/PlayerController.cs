@@ -107,7 +107,7 @@ public class PlayerController : MonoBehaviour
         animator = GetComponent<Animator>();
 
         coll.height -= buffer * 2;
-        coll.radius -= buffer;
+        //coll.radius -= buffer;
     }
 
     // Start is called before the first frame update
@@ -134,30 +134,30 @@ public class PlayerController : MonoBehaviour
     {
         GetInput();
 
-        if (currentPlayerState == PlayerState.Grounded)
-        {
-            mat.SetColor("_EmissionColor", Color.black);
-            aerialJumpCount = numAerialJumps;
-        }
-        else if (currentPlayerState == PlayerState.Aerial)
-        {
-            mat.SetColor("_EmissionColor", aerialEmissiveColor);
-        }
+        //if (currentPlayerState == PlayerState.Grounded)
+        //{
+        //    mat.SetColor("_EmissionColor", Color.black);
+        //    aerialJumpCount = numAerialJumps;
+        //}
+        //else if (currentPlayerState == PlayerState.Aerial)
+        //{
+        //    mat.SetColor("_EmissionColor", aerialEmissiveColor);
+        //}
 
-        mat.color = Color.blue;
+        //mat.color = Color.blue;
 
-        if (currentActions.Overlaps(jump.Values))
-        {
-            mat.color = Color.red;
-        }
-        if (currentActions.Overlaps(dodge.Values))
-        {
-            mat.color = Color.green;
-        }
-        if (currentActions.Contains(land))
-        {
-            mat.color = Color.gray;
-        }
+        //if (currentActions.Overlaps(jump.Values))
+        //{
+        //    mat.color = Color.red;
+        //}
+        //if (currentActions.Overlaps(dodge.Values))
+        //{
+        //    mat.color = Color.green;
+        //}
+        //if (currentActions.Contains(land))
+        //{
+        //    mat.color = Color.gray;
+        //}
 
         // Check and correct for environment collision;
         CollisionCheck();
@@ -268,10 +268,10 @@ public class PlayerController : MonoBehaviour
     void CollisionCheck()
     {
         float height = coll.height + buffer * 2;
-        float radius = coll.radius + buffer;
+        float radius = coll.radius;
 
         float vCastDistance = height / 2f;
-        Vector3 vHalfExtents = new Vector3(coll.radius, height / 4f, 0.5f);
+        Vector3 vHalfExtents = new Vector3(coll.radius - buffer, height / 4f, 0.5f);
         bool ground = Physics.BoxCast(transform.position, vHalfExtents, Vector3.down, out RaycastHit groundHit, Quaternion.identity, vCastDistance); 
         bool ceiling = Physics.BoxCast(transform.position, vHalfExtents, Vector3.up, out RaycastHit ceilingHit, Quaternion.identity, vCastDistance);
 
@@ -279,6 +279,8 @@ public class PlayerController : MonoBehaviour
         Vector3 hHalfExtents = new Vector3(radius / 2f, coll.height / 2f, 0.5f);
         bool right = Physics.BoxCast(transform.position, hHalfExtents, Vector3.right, out RaycastHit rightHit, Quaternion.identity, hCastDistance);
         bool left = Physics.BoxCast(transform.position, hHalfExtents, Vector3.left, out RaycastHit leftHit, Quaternion.identity, hCastDistance);
+
+        //Debug.Log($"{ground}, {ceiling}, {left}, {right}");
 
         if (ceiling && rb.velocity.y >= 0)
         {
@@ -292,22 +294,22 @@ public class PlayerController : MonoBehaviour
 
         if (right && rb.velocity.x >= 0)
         {
-            Vector3 rightPosition = transform.position;
-            rightPosition.x = rightHit.point.x - hCastDistance;
-            transform.position = rightPosition;
-            Vector3 fixedVelocity = rb.velocity;
-            fixedVelocity.x = 0f;
-            rb.velocity = fixedVelocity;
+            //Vector3 rightPosition = transform.position;
+            //rightPosition.x = rightHit.point.x - hCastDistance;
+            //transform.position = rightPosition;
+            //Vector3 fixedVelocity = rb.velocity;
+            //fixedVelocity.x = 0f;
+            //rb.velocity = fixedVelocity;
         }
 
         if (left && rb.velocity.x <= 0)
         {
-            Vector3 leftPosition = transform.position;
-            leftPosition.x = leftHit.point.x + hCastDistance;
-            transform.position = leftPosition;
-            Vector3 fixedVelocity = rb.velocity;
-            fixedVelocity.x = 0f;
-            rb.velocity = fixedVelocity;
+            //Vector3 leftPosition = transform.position;
+            //leftPosition.x = leftHit.point.x + hCastDistance;
+            //transform.position = leftPosition;
+            //Vector3 fixedVelocity = rb.velocity;
+            //fixedVelocity.x = 0f;
+            //rb.velocity = fixedVelocity;
         }
 
         if (ground && rb.velocity.y <= 0)
