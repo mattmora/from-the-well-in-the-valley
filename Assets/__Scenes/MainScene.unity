@@ -3089,7 +3089,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentPlayerState: 0
-  gravity: {x: 0, y: -40, z: 0}
+  gravity: {x: 0, y: -80, z: 0}
+  reducedGravity: {x: 0, y: -40, z: 0}
   activeGravity: {x: 0, y: 0, z: 0}
   buffer: 0.05
   traction: 50
@@ -3103,6 +3104,7 @@ MonoBehaviour:
     horizontal: 0
     verticalAlt: 0
     horizontalAlt: 0
+    jump: 0
   events:
     jump: 0
     dodge: 0
@@ -3140,7 +3142,7 @@ MonoBehaviour:
   groundedJump:
     segments:
     - name: JumpSquat
-      numFrames: 8
+      numFrames: 3
     - name: Jump
       numFrames: 1
     - name: Rising
@@ -3149,7 +3151,7 @@ MonoBehaviour:
     segmentFrame: 0
     correspondingPlayerState: 1
     active: 0
-    shortJumpForce: 9
+    shortJumpForce: 14
     fullJumpForce: 14
   aerialJump:
     segments:

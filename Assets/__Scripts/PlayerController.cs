@@ -16,6 +16,7 @@ public class PlayerController : MonoBehaviour
     public PlayerState currentPlayerState;
 
     public Vector3 gravity = new Vector3(0, -40, 0);
+    public Vector3 reducedGravity = new Vector3(0, -20, 0);
     public Vector3 activeGravity;
 
     public float buffer = 0.1f;
@@ -39,6 +40,7 @@ public class PlayerController : MonoBehaviour
         public float horizontal;
         public float verticalAlt;
         public float horizontalAlt;
+        public bool jump;
     }
 
     [Serializable]
@@ -217,6 +219,8 @@ public class PlayerController : MonoBehaviour
             events.jump = 3;
         }
 
+        inputs.jump = Input.GetButton("Jump");
+
         //inputs.verticalAlt = (Input.GetAxis("VerticalAlt") * control) + (inputs.verticalAlt * (1.0f - control));
         //inputs.horizontalAlt = (Input.GetAxis("HorizontalAlt") * control) + (inputs.horizontalAlt * (1.0f - control));
         //if (Input.GetButtonDown("Dodge"))
@@ -326,7 +330,7 @@ public class PlayerController : MonoBehaviour
         {
             if (currentPlayerState == PlayerState.Grounded) events.falloff = true;
             currentPlayerState = PlayerState.Aerial;
-            activeGravity = gravity;
+            activeGravity =  inputs.jump ? reducedGravity : gravity;
         }
     }
 
