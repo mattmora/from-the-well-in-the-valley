@@ -315,6 +315,8 @@ public class GroundedJumpAction : PlayerAction
 {
     public float shortJumpForce = 5;
     public float fullJumpForce = 10;
+    public float floatForce = 5;
+    public bool releaseToJump = false;
     private float jumpForce;
     public GroundedJumpAction() : base(3)
     {
@@ -337,6 +339,7 @@ public class GroundedJumpAction : PlayerAction
         else
         {
             jumpForce = shortJumpForce;
+            if (releaseToJump) EndCurrentSegment();
         }
         segmentFrame++;
     }
@@ -358,6 +361,10 @@ public class GroundedJumpAction : PlayerAction
         {
             owner.animator.Play("Stand");
             EndCurrentSegment();
+        }
+        else if(Input.GetButton("Jump"))
+        {
+            rb.AddForce(floatForce * Vector3.up, ForceMode.Acceleration);
         }
     }
 }

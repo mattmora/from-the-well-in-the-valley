@@ -16,7 +16,6 @@ public class PlayerController : MonoBehaviour
     public PlayerState currentPlayerState;
 
     public Vector3 gravity = new Vector3(0, -40, 0);
-    public Vector3 reducedGravity = new Vector3(0, -20, 0);
     public Vector3 activeGravity;
 
     public float buffer = 0.1f;
@@ -136,15 +135,15 @@ public class PlayerController : MonoBehaviour
     {
         GetInput();
 
-        //if (currentPlayerState == PlayerState.Grounded)
-        //{
-        //    mat.SetColor("_EmissionColor", Color.black);
-        //    aerialJumpCount = numAerialJumps;
-        //}
-        //else if (currentPlayerState == PlayerState.Aerial)
-        //{
-        //    mat.SetColor("_EmissionColor", aerialEmissiveColor);
-        //}
+        if (currentPlayerState == PlayerState.Grounded)
+        {
+            //mat.SetColor("_EmissionColor", Color.black);
+            aerialJumpCount = numAerialJumps;
+        }
+        else if (currentPlayerState == PlayerState.Aerial)
+        {
+            //mat.SetColor("_EmissionColor", aerialEmissiveColor);
+        }
 
         //mat.color = Color.blue;
 
@@ -330,7 +329,7 @@ public class PlayerController : MonoBehaviour
         {
             if (currentPlayerState == PlayerState.Grounded) events.falloff = true;
             currentPlayerState = PlayerState.Aerial;
-            activeGravity =  inputs.jump ? reducedGravity : gravity;
+            activeGravity = gravity;
         }
     }
 
