@@ -51,8 +51,17 @@ public class PlayerController : MonoBehaviour
         public bool falloff;
     }
 
+    public class CollisionFlags
+    {
+        public bool ground;
+        public bool ceiling;
+        public bool left;
+        public bool right;
+    }
+
     public PlayerInput inputs;
     public PlayerEvents events;
+    private CollisionFlags collision = new CollisionFlags();
 
     public Vector3 forward;
     public Vector3 right;
@@ -66,7 +75,8 @@ public class PlayerController : MonoBehaviour
     private Vector3 isoRight;
 
     private Rigidbody rb;
-    private CapsuleCollider coll;
+    private CapsuleCollider capsule;
+    private BoxCollider box;
     private Material mat;
 
     public Color aerialEmissiveColor = new Color(0.4f, 0.4f, 0.4f, 0.4f);
@@ -102,12 +112,18 @@ public class PlayerController : MonoBehaviour
         isoRight = Vector3.right;//Vector3.Normalize(Vector3.right + Vector3.back);
 
         rb = GetComponent<Rigidbody>();
-        coll = GetComponent<CapsuleCollider>();
+        capsule = GetComponent<CapsuleCollider>();
+        box = GetComponent<BoxCollider>();
         mat = GetComponent<Renderer>().material;
         sprite = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
 
-        coll.height -= buffer * 2;
+        capsule.height -= (buffer + Physics.defaultContactOffset) * 2;
+        capsule.radius -= buffer + Physics.defaultContactOffset;
+        Vector3 boxSize = box.size;
+        boxSize.y -= (buffer * 2 + Physics.defaultContactOffset * 5);
+        boxSize.x -= (buffer * 2 + Physics.defaultContactOffset * 5);
+        box.size = boxSize;
         //coll.radius -= buffer;
     }
 
@@ -165,7 +181,6 @@ public class PlayerController : MonoBehaviour
     {
         ProcessInput();
 
-        
         CollisionCheck();
         GroundUpdate();
 
@@ -230,7 +245,9 @@ public class PlayerController : MonoBehaviour
 
     void ProcessInput()
     {
-        if (inputs.horizontal != 0 || inputs.vertical != 0)
+        bool moveInput = inputs.horizontal != 0 || inputs.vertical != 0;
+        bool canMove = (inputs.horizontal > 0 && !collision.right) || (inputs.horizontal < 0 && !collision.left);
+        if (moveInput && canMove)
         {
             //if (Input.GetButton("Dash") && currentPlayerState == PlayerState.Grounded)
             //{
@@ -267,58 +284,61 @@ public class PlayerController : MonoBehaviour
 
     void CollisionCheck()
     {
-        float height = coll.height + buffer * 2;
-        float radius = coll.radius;
+        float height = capsule.height + buffer * 2;
+        float radius = capsule.radius + buffer;
 
         float vCastDistance = height / 2f;
-        Vector3 vHalfExtents = new Vector3(coll.radius - buffer, Physics.defaultContactOffset, 0.5f);
-        bool ground = Physics.BoxCast(transform.position, vHalfExtents, Vector3.down, out RaycastHit groundHit, Quaternion.identity, vCastDistance); 
-        bool ceiling = Physics.BoxCast(transform.position, vHalfExtents, Vector3.up, out RaycastHit ceilingHit, Quaternion.identity, vCastDistance);
-        Debug.DrawRay(transform.position, Vector3.up * vCastDistance);
+        Vector3 vHalfExtents = new Vector3(capsule.radius - Physics.defaultContactOffset, Physics.defaultContactOffset, 0.5f);
+        collision.ground = Physics.BoxCast(transform.position, vHalfExtents, Vector3.down, out RaycastHit groundHit, Quaternion.identity, vCastDistance) && rb.velocity.y <= 0;
+        collision.ceiling = Physics.BoxCast(transform.position, vHalfExtents, Vector3.up, out RaycastHit ceilingHit, Quaternion.identity, vCastDistance) && rb.velocity.y >= 0;
 
         float hCastDistance = radius; 
-        Vector3 hHalfExtents = new Vector3(radius / 2f, Physics.defaultContactOffset, 0.5f);
-        bool right = Physics.BoxCast(transform.position, hHalfExtents, Vector3.right, out RaycastHit rightHit, Quaternion.identity, hCastDistance);
-        bool left = Physics.BoxCast(transform.position, hHalfExtents, Vector3.left, out RaycastHit leftHit, Quaternion.identity, hCastDistance);
+        Vector3 hHalfExtents = new Vector3(Physics.defaultContactOffset, capsule.height / 2 - Physics.defaultContactOffset, 0.5f);
+        collision.right = Physics.BoxCast(transform.position, hHalfExtents, Vector3.right, out RaycastHit rightHit, Quaternion.identity, hCastDistance) && rb.velocity.x >= 0;
+        collision.left = Physics.BoxCast(transform.position, hHalfExtents, Vector3.left, out RaycastHit leftHit, Quaternion.identity, hCastDistance) && rb.velocity.x <= 0;
 
         //Debug.Log($"{ground}, {ceiling}, {left}, {right}");
 
-        if (ceiling && rb.velocity.y >= 0)
+        if (collision.ceiling)
         {
+            //Debug.Log("ceiling");
             Vector3 ceilingPosition = transform.position;
-            ceilingPosition.y = ceilingHit.point.y - vCastDistance;
+            ceilingPosition.y = ceilingHit.point.y - vCastDistance - Physics.defaultContactOffset;
             transform.position = ceilingPosition;
-            //Vector3 fixedVelocity = rb.velocity;
-            //fixedVelocity.y = 0f;
-            //rb.velocity = fixedVelocity;
+            Vector3 fixedVelocity = rb.velocity;
+            fixedVelocity.y = 0f;
+            rb.velocity = fixedVelocity;
         }
 
-        if (right && rb.velocity.x >= 0)
+        if (collision.right)
         {
-            //Vector3 rightPosition = transform.position;
-            //rightPosition.x = rightHit.point.x - hCastDistance;
-            //transform.position = rightPosition;
-            //Vector3 fixedVelocity = rb.velocity;
-            //fixedVelocity.x = 0f;
-            //rb.velocity = fixedVelocity;
+            //Debug.Log("right");
+            Vector3 rightPosition = transform.position;
+            rightPosition.x = rightHit.point.x - hCastDistance - Physics.defaultContactOffset;
+            transform.position = rightPosition;
+            Vector3 fixedVelocity = rb.velocity;
+            fixedVelocity.x = 0f;
+            rb.velocity = fixedVelocity;
         }
 
-        if (left && rb.velocity.x <= 0)
+        if (collision.left)
         {
-            //Vector3 leftPosition = transform.position;
-            //leftPosition.x = leftHit.point.x + hCastDistance;
-            //transform.position = leftPosition;
-            //Vector3 fixedVelocity = rb.velocity;
-            //fixedVelocity.x = 0f;
-            //rb.velocity = fixedVelocity;
+            //Debug.Log("left");
+            Vector3 leftPosition = transform.position;
+            leftPosition.x = leftHit.point.x + hCastDistance + Physics.defaultContactOffset;
+            transform.position = leftPosition;
+            Vector3 fixedVelocity = rb.velocity;
+            fixedVelocity.x = 0f;
+            rb.velocity = fixedVelocity;
         }
 
-        if (ground && rb.velocity.y <= 0)
+        if (collision.ground)
         {
+            //Debug.Log("ground");
             if (currentPlayerState == PlayerState.Aerial) events.land = true;
             currentPlayerState = PlayerState.Grounded;
             Vector3 landingPosition = transform.position;
-            landingPosition.y = groundHit.point.y + vCastDistance;
+            landingPosition.y = groundHit.point.y + vCastDistance + Physics.defaultContactOffset;
             transform.position = landingPosition;
             Vector3 landingVelocity = rb.velocity;
             landingVelocity.y = 0f;

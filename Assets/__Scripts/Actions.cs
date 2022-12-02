@@ -267,7 +267,7 @@ public class MoveAction : PlayerAction
 
     protected override void PostAction()
     {
-        owner.animator.Play("Stand");
+        if (owner.currentPlayerState == PlayerState.Grounded) owner.animator.Play("Stand");
     }
 }
 
