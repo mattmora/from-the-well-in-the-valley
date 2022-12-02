@@ -271,12 +271,13 @@ public class PlayerController : MonoBehaviour
         float radius = coll.radius;
 
         float vCastDistance = height / 2f;
-        Vector3 vHalfExtents = new Vector3(coll.radius - buffer, height / 4f, 0.5f);
+        Vector3 vHalfExtents = new Vector3(coll.radius - buffer, Physics.defaultContactOffset, 0.5f);
         bool ground = Physics.BoxCast(transform.position, vHalfExtents, Vector3.down, out RaycastHit groundHit, Quaternion.identity, vCastDistance); 
         bool ceiling = Physics.BoxCast(transform.position, vHalfExtents, Vector3.up, out RaycastHit ceilingHit, Quaternion.identity, vCastDistance);
+        Debug.DrawRay(transform.position, Vector3.up * vCastDistance);
 
         float hCastDistance = radius; 
-        Vector3 hHalfExtents = new Vector3(radius / 2f, coll.height / 2f, 0.5f);
+        Vector3 hHalfExtents = new Vector3(radius / 2f, Physics.defaultContactOffset, 0.5f);
         bool right = Physics.BoxCast(transform.position, hHalfExtents, Vector3.right, out RaycastHit rightHit, Quaternion.identity, hCastDistance);
         bool left = Physics.BoxCast(transform.position, hHalfExtents, Vector3.left, out RaycastHit leftHit, Quaternion.identity, hCastDistance);
 
