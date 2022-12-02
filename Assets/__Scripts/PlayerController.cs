@@ -158,9 +158,6 @@ public class PlayerController : MonoBehaviour
         //{
         //    mat.color = Color.gray;
         //}
-
-        // Check and correct for environment collision;
-        CollisionCheck();
     }
 
     private void FixedUpdate()

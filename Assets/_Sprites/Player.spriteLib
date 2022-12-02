@@ -47,6 +47,16 @@ MonoBehaviour:
       m_Sprite: {fileID: 792877064, guid: 7884f263e3c2df64fa96c1dfe91754ba, type: 3}
       m_FromMain: 0
       m_SpriteOverride: {fileID: 792877064, guid: 7884f263e3c2df64fa96c1dfe91754ba, type: 3}
+    - m_Name: Sit
+      m_Hash: 1928080432
+      m_Sprite: {fileID: -1285880260, guid: 7884f263e3c2df64fa96c1dfe91754ba, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: -1285880260, guid: 7884f263e3c2df64fa96c1dfe91754ba, type: 3}
+    - m_Name: Hurt
+      m_Hash: 1740614436
+      m_Sprite: {fileID: -922414599, guid: 7884f263e3c2df64fa96c1dfe91754ba, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: -922414599, guid: 7884f263e3c2df64fa96c1dfe91754ba, type: 3}
     m_FromMain: 0
-    m_EntryOverrideCount: 6
+    m_EntryOverrideCount: 8
   m_PrimaryLibraryGUID: 
