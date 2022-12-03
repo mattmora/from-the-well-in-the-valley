@@ -284,16 +284,13 @@ public class PlayerController : MonoBehaviour
 
     void CollisionCheck()
     {
-        float height = capsule.height + buffer * 2;
-        float radius = capsule.radius + buffer;
-
-        float vCastDistance = height / 2f;
+        float vCastDistance = capsule.height / 2f + buffer;
         Vector3 vHalfExtents = new Vector3(capsule.radius - Physics.defaultContactOffset, Physics.defaultContactOffset, 0.5f);
         collision.ground = Physics.BoxCast(transform.position, vHalfExtents, Vector3.down, out RaycastHit groundHit, Quaternion.identity, vCastDistance) && rb.velocity.y <= 0;
         collision.ceiling = Physics.BoxCast(transform.position, vHalfExtents, Vector3.up, out RaycastHit ceilingHit, Quaternion.identity, vCastDistance) && rb.velocity.y >= 0;
 
-        float hCastDistance = radius; 
-        Vector3 hHalfExtents = new Vector3(Physics.defaultContactOffset, capsule.height / 2 - Physics.defaultContactOffset, 0.5f);
+        float hCastDistance = capsule.radius + buffer; 
+        Vector3 hHalfExtents = new Vector3(Physics.defaultContactOffset, capsule.height / 2 - buffer - Physics.defaultContactOffset, 0.5f);
         collision.right = Physics.BoxCast(transform.position, hHalfExtents, Vector3.right, out RaycastHit rightHit, Quaternion.identity, hCastDistance) && rb.velocity.x >= 0;
         collision.left = Physics.BoxCast(transform.position, hHalfExtents, Vector3.left, out RaycastHit leftHit, Quaternion.identity, hCastDistance) && rb.velocity.x <= 0;
 
