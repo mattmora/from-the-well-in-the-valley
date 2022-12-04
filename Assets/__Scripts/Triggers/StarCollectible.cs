@@ -3,26 +3,28 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class WingCollectible : Trigger
+public class StarCollectible : Trigger
 {
-    public GameObject wing;
+    public GameObject star;
 
     protected override void OnTrigger()
     {
-        Services.Player.numAerialJumps++;
 
         transform.parent = Services.Player.transform;
 
         Sequence collect = DOTween.Sequence();
         //collect.Append(DOTween.To(() => Time.timeScale, t => Time.timeScale = t, 0f, 0.2f));
         //collect.AppendInterval(0.6f);
-        collect.Append(wing.transform.DOLocalJump(Vector3.up * 1f, 3f, 1, 0.5f).SetEase(Ease.Linear));
+        collect.Append(star.transform.DOLocalJump(Vector3.up * 1f, 3f, 1, 0.5f).SetEase(Ease.Linear));
         collect.AppendInterval(1f);
-        collect.Append(wing.transform.DOScale(0f, 0.1f));
-        collect.AppendCallback(() => Destroy(wing));
+        collect.Append(star.transform.DOScale(0f, 0.1f));
+        collect.AppendCallback(() => Destroy(star));
         collect.AppendInterval(0.6f);
         //collect.Append(DOTween.To(() => Time.timeScale, t => Time.timeScale = t, 1f, 0.05f));
-        collect.AppendCallback(() => Destroy(gameObject));
+        collect.AppendCallback(() => {
+            Services.Player.stars++;
+            Destroy(gameObject);
+        });
         collect.SetUpdate(true);
     }
 }

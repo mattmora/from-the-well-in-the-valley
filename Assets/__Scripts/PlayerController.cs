@@ -14,6 +14,8 @@ public class PlayerController : MonoBehaviour
         Aerial
     }
 
+    public int stars;
+
     public Transform cameraFocus;
 
     public PlayerState currentPlayerState;
@@ -54,6 +56,8 @@ public class PlayerController : MonoBehaviour
         public bool dodge;
         public bool land;
         public bool falloff;
+        public bool charge1;
+        public bool fire1;
     }
 
     public class CollisionFlags
@@ -70,16 +74,21 @@ public class PlayerController : MonoBehaviour
 
     public Vector3 forward;
     public Vector3 face;
+    public Vector3 lastInputDir;
     public Vector3 forwardAlt;
     public Vector3 rightAlt;
 
     public int numAerialJumps = 1;
     public int aerialJumpCount;
 
+    public GameObject bubblePrefab;
+    public int maxBubbles = 1;
+    public int bubbleCount;
+
     private Vector3 isoForward;
     private Vector3 isoRight;
 
-    private Rigidbody rb;
+    public Rigidbody rb;
     private CapsuleCollider capsule;
     private BoxCollider box;
     private Material mat;
@@ -95,6 +104,7 @@ public class PlayerController : MonoBehaviour
     public LandAction land;
     public FallOffAction falloff;
     public CrouchAction crouch;
+    public BubbleAction bubble;
 
     private PlayerActionSet jump;
     private PlayerActionSet dodge;
@@ -199,6 +209,8 @@ public class PlayerController : MonoBehaviour
         // Get isometrically adjusted input vectors
         forward = Vector3.zero;//inputs.vertical * isoForward;
         face = inputs.horizontal * isoRight;
+        Vector3 inputDir = (inputs.horizontal * Vector3.right + inputs.vertical * Vector3.up).normalized;
+        lastInputDir = inputDir == Vector3.zero ? lastInputDir : inputDir;
 
         forwardAlt = inputs.verticalAlt * isoForward;
         rightAlt = inputs.horizontalAlt * isoRight;
@@ -238,10 +250,20 @@ public class PlayerController : MonoBehaviour
 
         if (Input.GetButtonDown("Jump"))
         {
+            // 3 frame buffer
             events.jump = 3;
         }
 
         inputs.jump = Input.GetButton("Jump");
+
+        if (Input.GetButtonDown("Fire1"))
+        {
+            events.charge1 = true;
+        }
+        if (Input.GetButtonUp("Fire1"))
+        {
+            events.fire1 = true;
+        }
 
         //inputs.verticalAlt = (Input.GetAxis("VerticalAlt") * control) + (inputs.verticalAlt * (1.0f - control));
         //inputs.horizontalAlt = (Input.GetAxis("HorizontalAlt") * control) + (inputs.horizontalAlt * (1.0f - control));
@@ -291,6 +313,12 @@ public class PlayerController : MonoBehaviour
             }
         }
         events.jump = Mathf.Max(0, events.jump - 1);
+
+        if (events.charge1)
+        {
+            bubble.StartAction();
+            events.charge1 = false;
+        }
 
         //if (events.dodge)
         //{
@@ -386,6 +414,14 @@ public class PlayerController : MonoBehaviour
     public void DecrementJumpCount()
     {
         if (currentPlayerState == PlayerState.Aerial) aerialJumpCount--;
+    }
+
+    public Bubble MakeBubble()
+    {
+        bubbleCount++;
+        Bubble bubble = Instantiate(bubblePrefab, transform.position + lastInputDir * 1f, Quaternion.identity, transform).GetComponent<Bubble>();
+        bubble.rb.isKinematic = true;
+        return bubble;
     }
 
     public void MoveCameraFocus(Vector3 position)

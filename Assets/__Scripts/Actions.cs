@@ -582,3 +582,47 @@ public class FallOffAction : PlayerAction
         segmentFrame++;
     }
 }
+
+[Serializable]
+public class BubbleAction : PlayerAction
+{
+    private Bubble bubble;
+
+    public BubbleAction() : base(2)
+    {
+        segments[0] = new Segment("Charge", ChargeProcess, 2, ActionFlow.Free);
+        segments[1] = new Segment("Fire", FireProcess, 1, ActionFlow.Free);
+
+        playCheck = () => (owner.bubbleCount < owner.maxBubbles);
+    }
+
+    protected override void PreAction()
+    {
+        owner.events.fire1 = false;
+    }
+
+    private void ChargeProcess(Rigidbody rb)
+    {
+        if (segmentFrame == 0)
+        {
+            bubble = owner.MakeBubble();
+            bubble.SetSize(0);
+            segmentFrame++;
+        }
+        else if (owner.events.fire1)
+        {
+            EndCurrentSegment();
+        }
+        if (bubble == null) StopAction();
+    }
+
+    private void FireProcess(Rigidbody rb)
+    {
+        if (bubble == null) StopAction();
+        bubble.rb.isKinematic = false;
+        bubble.transform.parent = null;
+        //owner.lastInputDir * 5f
+        bubble.rb.AddForce(rb.velocity, ForceMode.VelocityChange);
+        segmentFrame++;
+    }
+}

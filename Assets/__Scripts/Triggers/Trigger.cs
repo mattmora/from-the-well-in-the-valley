@@ -14,10 +14,11 @@ public abstract class Trigger : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        if (collected) return;
+        collected = true;
         preTriggerEvents.Invoke();
         OnTrigger();
         postTriggerEvents.Invoke();
         if (singleUse) Destroy(gameObject);
-        else collected = true;
     }
 }
