@@ -4,12 +4,12 @@ using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
-    public Vector3 offsetFromPlayer;
+    public Vector3 offset;
 
     // Update is called once per frame
     void LateUpdate()
     {
-        transform.position = Services.Player.transform.position + offsetFromPlayer;
+        transform.position = Services.Player.cameraFocus.position + offset;
 
         // check camera wall collider and offset from it, overwriting player offset
     }

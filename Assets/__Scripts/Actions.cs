@@ -63,7 +63,8 @@ public abstract class PlayerAction
     public Segment[] segments; // All segments, including start up and end lag if they exist
     public int segmentIndex;
     public int segmentFrame;
-    private bool stopped;
+    protected bool stopped;
+    protected bool canceled;
 
     protected string actionName;
 
@@ -132,9 +133,11 @@ public abstract class PlayerAction
             }
         }
 
+        canceled = false;
         foreach (PlayerAction action in actionsToCancel)
         {
             Debug.Log(action.actionName + " CANCELED BY " + actionName);
+            action.canceled = true;
             action.StopAction();
         }
 
@@ -250,7 +253,7 @@ public class MoveAction : PlayerAction
         // Blocks self
         SetActionFlowForSegments(0, ActionFlow.Blocks, typeof(MoveAction));
         // Cancelled by run
-        SetActionFlowForSegments(0, ActionFlow.CanceledBy, typeof(RunAction), typeof(GroundedDodgeAction), typeof(AerialDodgeAction), typeof(LandAction), typeof(GroundedJumpAction)); 
+        SetActionFlowForSegments(0, ActionFlow.CanceledBy, typeof(RunAction), typeof(GroundedDodgeAction), typeof(AerialDodgeAction), typeof(LandAction), typeof(GroundedJumpAction), typeof(CrouchAction)); 
     }
 
     private void MoveProcess(Rigidbody rb)
@@ -258,16 +261,55 @@ public class MoveAction : PlayerAction
         if (owner.currentPlayerState == PlayerState.Grounded) owner.animator.Play("Move");
         // Apply normal acceleration based on direction input
         float acceleration = owner.currentPlayerState == PlayerState.Grounded ? groundedAcceleration : aerialAcceleration;
-        Vector3 movement = acceleration * Vector3.Normalize(owner.forward + owner.right);
+        Vector3 movement = acceleration * Vector3.Normalize(owner.forward + owner.face);
         rb.AddForce(movement);
-        if (movement.x > 0) owner.sprite.flipX = false;
-        else if (movement.x < 0) owner.sprite.flipX = true;
+        if (owner.face.x > 0) owner.sprite.flipX = false;
+        else if (owner.face.x < 0) owner.sprite.flipX = true;
         //segmentFrame++;
     }
 
     protected override void PostAction()
     {
         if (owner.currentPlayerState == PlayerState.Grounded) owner.animator.Play("Stand");
+    }
+}
+
+[Serializable]
+public class CrouchAction : PlayerAction
+{
+    public CrouchAction() : base(2)
+    {
+        segments[0] = new Segment("Crouch", CrouchProcess, 20, ActionFlow.CanceledBy);
+        segments[1] = new Segment("Look", LookProcess, 2, ActionFlow.CanceledBy);
+
+        // Blocks self
+        SetActionFlowForSegments(0, ActionFlow.Blocks, typeof(CrouchAction), typeof(MoveAction));
+        SetActionFlowForSegments(1, ActionFlow.Blocks, typeof(CrouchAction), typeof(MoveAction));
+    }
+
+    private void CrouchProcess(Rigidbody rb)
+    {
+        owner.animator.Play("Land");
+        if (owner.face.x > 0) owner.sprite.flipX = false;
+        else if (owner.face.x < 0) owner.sprite.flipX = true;
+        segmentFrame++;
+    }
+
+    private void LookProcess(Rigidbody rb)
+    {
+        if (segmentFrame == 0)
+        {
+            owner.MoveCameraFocus(Vector3.down * 4f);
+            segmentFrame++;
+        }
+        if (owner.face.x > 0) owner.sprite.flipX = false;
+        else if (owner.face.x < 0) owner.sprite.flipX = true;
+    }
+
+    protected override void PostAction()
+    {
+        owner.MoveCameraFocus(Vector3.zero);
+        if (!canceled) owner.animator.Play("Stand");
     }
 }
 
@@ -296,7 +338,7 @@ public class RunAction : PlayerAction
 
     private void InitialDashProcess(Rigidbody rb)
     {
-        Vector3 movement = acceleration * Vector3.Normalize(owner.forward + owner.right);
+        Vector3 movement = acceleration * Vector3.Normalize(owner.forward + owner.face);
         rb.AddForce(movement);
         acceleration += accelerationInc;
         segmentFrame++;
@@ -304,7 +346,7 @@ public class RunAction : PlayerAction
 
     private void MoveProcess(Rigidbody rb)
     {
-        Vector3 movement = acceleration * Vector3.Normalize(owner.forward + owner.right);
+        Vector3 movement = acceleration * Vector3.Normalize(owner.forward + owner.face);
         rb.AddForce(movement);
         //segmentFrame++;
     }
