@@ -16,7 +16,7 @@ public class WingCollectible : Trigger
         Sequence collect = DOTween.Sequence();
         //collect.Append(DOTween.To(() => Time.timeScale, t => Time.timeScale = t, 0f, 0.2f));
         //collect.AppendInterval(0.6f);
-        collect.Append(wing.transform.DOLocalJump(Vector3.up * 1f, 3f, 1, 0.5f).SetEase(Ease.Linear));
+        collect.Append(transform.DOLocalJump(Vector3.up * 1.25f, 3f, 1, 0.5f).SetEase(Ease.Linear));
         collect.AppendInterval(1f);
         collect.Append(wing.transform.DOScale(0f, 0.1f));
         collect.AppendCallback(() => Destroy(wing));
