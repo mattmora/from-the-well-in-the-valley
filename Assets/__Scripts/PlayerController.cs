@@ -122,6 +122,12 @@ public class PlayerController : MonoBehaviour
 
     private void Awake()
     {
+#if UNITY_EDITOR
+        Debug.unityLogger.logEnabled = true;
+#else
+  Debug.unityLogger.logEnabled = false;
+#endif
+
         Services.Player = this;
 
         isoForward = Vector3.zero;//Vector3.Normalize(Vector3.forward + Vector3.right);
