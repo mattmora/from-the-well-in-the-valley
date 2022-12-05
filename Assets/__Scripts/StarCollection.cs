@@ -1,10 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class StarCollection : MonoBehaviour
 {
-    public List<SpriteRenderer> starSlots;
+    public List<Image> starSlots;
     public Sprite starIcon;
     public GameObject completeText;
     public GameObject completeObject;
@@ -16,7 +17,7 @@ public class StarCollection : MonoBehaviour
         {
             starSlots[i].sprite = starIcon;
         }
-        completeText.SetActive(Services.Player.stars == 5);
+        completeText.SetActive(Services.Player.stars == 5 && Services.Player.numAerialJumps < 2);
         completeObject.SetActive(Services.Player.stars == 5);
     }
 }

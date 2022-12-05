@@ -404,7 +404,7 @@ public class PlayerController : MonoBehaviour
                 (collision.left & !wasLeft && vel.x < -2f) ||
                 (collision.right && !wasRight && vel.x > 2f))
         {
-            Services.Audio.Play("Bump", 1f, 0.2f);
+            Services.Audio.Play("Bump", 1f, 0.3f);
         }
 
     }
