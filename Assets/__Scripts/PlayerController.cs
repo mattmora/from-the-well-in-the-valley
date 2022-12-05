@@ -332,8 +332,13 @@ public class PlayerController : MonoBehaviour
         float vCastDistance = capsule.height / 2f + buffer;
         Vector3 vHalfExtents = new Vector3(capsule.radius - buffer - Physics.defaultContactOffset, Physics.defaultContactOffset, 0.5f);
         bool ground = Physics.BoxCast(transform.position + Vector3.down * vCastDistance * 0f, vHalfExtents, Vector3.down, out RaycastHit groundHit, Quaternion.identity, vCastDistance * 1f);
+        bool wasCeil = collision.ceiling;
+        bool wasLeft = collision.left;
+        bool wasRight = collision.right;
         collision.ground = ground && rb.velocity.y <= 0 && groundHit.point.y < transform.position.y - vCastDistance * 0.5f;
         collision.ceiling = Physics.BoxCast(transform.position, vHalfExtents, Vector3.up, out RaycastHit ceilingHit, Quaternion.identity, vCastDistance) && rb.velocity.y >= 0;
+
+        Vector3 vel = rb.velocity;
 
         if (collision.ceiling)
         {
@@ -394,6 +399,14 @@ public class PlayerController : MonoBehaviour
             fixedVelocity.x = 0f;
             rb.velocity = fixedVelocity;
         }
+
+        if ((collision.ceiling && !wasCeil && vel.y > 2f) ||
+                (collision.left & !wasLeft && vel.x < -2f) ||
+                (collision.right && !wasRight && vel.x > 2f))
+        {
+            Services.Audio.Play("Bump", 1f, 0.2f);
+        }
+
     }
 
     private void GroundUpdate()

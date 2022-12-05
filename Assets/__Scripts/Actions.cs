@@ -389,6 +389,7 @@ public class GroundedJumpAction : PlayerAction
     // Called in the owner's FixedUpdate for the duration of the segment
     private void JumpProcess(Rigidbody rb)
     {
+        Services.Audio.Play("Jump1");
         Vector3 xzVelocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
         rb.velocity = xzVelocity;
         Vector3 jump = jumpForce * Vector3.up;
@@ -431,6 +432,7 @@ public class AerialJumpAction : PlayerAction
     // Called in the owner's FixedUpdate for the duration of the segment
     private void JumpProcess(Rigidbody rb)
     {
+        Services.Audio.Play("Jump2");
         owner.animator.Play("Squat");
         owner.DecrementJumpCount();
         Vector3 xzVelocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
@@ -552,6 +554,11 @@ public class LandAction : PlayerAction
     public LandAction() : base(1)
     {
         segments[0] = new Segment("Land", LandProcess, 3, ActionFlow.Blocks);
+    }
+
+    protected override void PreAction()
+    {
+        Services.Audio.Play("Land", 0.5f, 0.2f);
     }
 
     private void LandProcess(Rigidbody rb)
