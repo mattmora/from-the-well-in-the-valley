@@ -21,7 +21,7 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    public void Play(string clipName, float pitch = 1f, float volume = 0.3f)
+    public void Play(string clipName, float pitch = 1f, float volume = 0.4f)
     {
         sources[clipName].pitch = pitch;
         sources[clipName].volume = volume;

@@ -1616,7 +1616,6 @@ GameObject:
   - component: {fileID: 519420036}
   - component: {fileID: 519420037}
   - component: {fileID: 519420038}
-  - component: {fileID: 519420039}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1799,31 +1798,6 @@ MonoBehaviour:
   - {fileID: 8300000, guid: ff1b54cad75ee2d41bf7a8db9598ec04, type: 3}
   - {fileID: 8300000, guid: de2d7efffea1460468020ff678212546, type: 3}
   - {fileID: 8300000, guid: aaae0804e5d1344428d8ec1d5dbc49ba, type: 3}
---- !u!169 &519420039
-AudioLowPassFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 519420028}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_LowpassResonanceQ: 1
-  lowpassLevelCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0.09049568
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
 --- !u!1 &686626993
 GameObject:
   m_ObjectHideFlags: 0
