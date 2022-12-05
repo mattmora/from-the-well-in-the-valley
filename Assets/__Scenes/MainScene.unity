@@ -1707,9 +1707,9 @@ MonoBehaviour:
   m_RefResolutionY: 162
   m_UpscaleRT: 0
   m_PixelSnapping: 0
-  m_CropFrameX: 0
-  m_CropFrameY: 0
-  m_StretchFill: 0
+  m_CropFrameX: 1
+  m_CropFrameY: 1
+  m_StretchFill: 1
 --- !u!114 &519420034
 MonoBehaviour:
   m_ObjectHideFlags: 0
